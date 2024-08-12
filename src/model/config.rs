@@ -1,10 +1,10 @@
-use crate::model::types::judge::JudgeType;
-use crate::model::types::judge::TaskType;
 use std::num::NonZeroU32;
 
 use super::types::judge::ResourceLimits;
-
-use crate::error::Result;
+use crate::{
+    error::Result,
+    model::types::judge::{JudgeType, TaskType},
+};
 
 pub trait Config {
     fn score(&self) -> Result<NonZeroU32> {

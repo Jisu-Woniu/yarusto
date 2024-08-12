@@ -1,14 +1,18 @@
-use crate::error::Result;
-use crate::model::{
-    config::Config,
-    types::{
-        duration::Duration,
-        judge::{Case, ResourceLimits, TaskType},
-        memory_size::MemorySize,
+use std::{path::PathBuf, str::FromStr};
+
+use serde::Deserialize;
+
+use crate::{
+    error::Result,
+    model::{
+        config::Config,
+        types::{
+            duration::Duration,
+            judge::{Case, ResourceLimits, TaskType},
+            memory_size::MemorySize,
+        },
     },
 };
-use serde::Deserialize;
-use std::{path::PathBuf, str::FromStr};
 
 #[derive(Debug, Deserialize)]
 pub struct RawConfig1 {

@@ -35,9 +35,8 @@ mod tests {
 
     use serde_json::json;
 
-    use crate::model::types::judge::Case;
-
     use super::*;
+    use crate::model::types::judge::Case;
 
     fn non_zero(value: u32) -> NonZeroU32 {
         debug_assert_ne!(value, 0);

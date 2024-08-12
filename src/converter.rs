@@ -1,26 +1,30 @@
+use std::{
+    borrow::Cow,
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
+
 use async_walkdir::WalkDir;
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
-use tempdir::TempDir;
-use tokio::fs::{self, File};
-use tokio::io::AsyncWriteExt;
+use tempfile::TempDir;
+use tokio::{
+    fs::{self, File},
+    io::AsyncWriteExt,
+};
 use tokio_stream::StreamExt;
 use zip::ZipArchive;
 
-use crate::model::cases_config::CasesConfig;
-use crate::model::config::Config;
-use crate::model::raw::config1::RawConfig1;
+use crate::model::{cases_config::CasesConfig, config::Config, raw::config1::RawConfig1};
 
 pub struct Converter {
     config_paths: Vec<PathBuf>,
-    temp_dir: PathBuf,
+    temp_dir: TempDir,
 }
 
 impl Converter {
     pub async fn build(input_path: impl AsRef<Path>) -> anyhow::Result<Self> {
         let zip_file = find_zip_file(input_path).await?;
 
-        let temp_dir = TempDir::new("yarusto")?.into_path();
+        let temp_dir = TempDir::new()?;
 
         let config_paths = extract_config_file(&zip_file, &temp_dir).await?;
 
@@ -30,42 +34,36 @@ impl Converter {
         })
     }
 
-    pub async fn rename(&self) -> anyhow::Result<&Self> {
+    pub async fn rename(&self) -> crate::error::Result<&Self> {
+        fn map_ext(orig: &str) -> Cow<'_, str> {
+            match orig {
+                "in" => Cow::Borrowed(orig),
+                _ => Cow::Owned(String::from("out")),
+            }
+        }
+
         let mut entries = WalkDir::new(&self.temp_dir);
         while let Some(entry) = entries.try_next().await? {
             let path = entry.path();
             let filename = path
                 .file_name()
-                .expect("Should have a filename")
-                .to_string_lossy();
-            if let Some((prefix, ext)) = filename.split_once('.') {
-                if let "in" | "out" | "ans" = ext {
-                    let digit: String = prefix
-                        .chars()
-                        .rev()
-                        .take_while(|c| c.is_digit(10))
-                        .collect::<String>()
-                        .chars()
-                        .rev()
-                        .collect();
-                    let new_filename = format!(
-                        "{}.{}",
-                        path.parent()
-                            .expect("Should have parent dir")
-                            .to_path_buf()
-                            .join(digit)
-                            .to_str()
-                            .expect("Rename error"),
-                        if ext == "out" { "ans" } else { ext }
-                    );
-                    println!("Renamed {} to {}", filename, &new_filename);
-                    if path.to_str().unwrap() != &new_filename {
-                        fs::copy(&path, Path::new(&new_filename)).await?;
-                        fs::remove_file(&path).await?;
-                    }
-                }
-            } else {
-                continue;
+                .expect("full path should have filename")
+                .to_str()
+                .expect("filename contains invalid UTF-8");
+
+            if let Some((basename, ext @ ("in" | "out" | "ans"))) = filename.rsplit_once(".") {
+                let digits = {
+                    let pos = basename
+                        .as_bytes()
+                        .iter()
+                        .rposition(|b| !b.is_ascii_digit())
+                        .map_or(0, |p| p + 1);
+                    &basename[pos..]
+                };
+
+                let new_path = path.with_file_name(format!("{}.{}", digits, map_ext(ext)));
+
+                fs::rename(path, new_path).await?;
             }
         }
         Ok(self)

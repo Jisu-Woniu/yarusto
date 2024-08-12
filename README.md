@@ -12,4 +12,4 @@ Options:
   -o, --output-path <OUTPUT_PATH>  The output file(.tar) path [default: ./out]
   -h, --help                       Print help
   -V, --version                    Print version
-````
+```
