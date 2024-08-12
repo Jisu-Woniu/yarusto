@@ -30,7 +30,7 @@ jobs:
       - name: Build Rust project (Release)
         run: cargo build --release
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: target/release
       - name: Upload Release Assets

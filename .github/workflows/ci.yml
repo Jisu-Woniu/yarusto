@@ -38,6 +38,6 @@ jobs:
       - name: Build Rust project (Debug)
         run: cargo build
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: target/debug
