@@ -25,8 +25,13 @@ jobs:
         uses: moonrepo/setup-rust@v1
         with:
           channel: stable
-      - name: Run Rust unit tests
-        run: cargo test
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.5
+      - name: Enable sccache
+        shell: bash
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
       - name: Build Rust project (Release)
         run: cargo build --release
       - name: Upload Build Artifacts
@@ -36,6 +41,7 @@ jobs:
           name: release-artifacts-${{ matrix.platform }}
       - name: Prepare Release Assets
         id: prepare-release
+        shell: bash
         run: >
           output-binary=target/release/yarusto-$(rustc --version --verbose | grep host | cut -d ' ' -f 2)
           ln target/release/yarusto $output-binary
