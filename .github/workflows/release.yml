@@ -44,8 +44,9 @@ jobs:
         id: prepare-release
         shell: bash
         run: |
-          binary="target/release/yarusto-$(rustc --version --verbose | grep host | cut -d ' ' -f 2)"
-          ln target/release/yarusto $binary
+          if [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ]; then binsuffix=".exe"; fi
+          binary="target/release/yarusto-$(rustc --version --verbose | grep host | cut -d ' ' -f 2)$binsuffix"
+          ln "target/release/yarusto$binsuffix" "$binary"
           echo "binary=$binary" >> $GITHUB_OUTPUT
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
