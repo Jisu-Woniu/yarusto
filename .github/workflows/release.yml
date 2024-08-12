@@ -33,11 +33,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: target/release
+          name: release-artifacts-${{ matrix.platform }}
+      - name: Prepare Release Assets
+        id: prepare-release
+        run: >
+          output-binary=target/release/yarusto-$(rustc --version --verbose | grep host | cut -d ' ' -f 2)
+          ln target/release/yarusto $output-binary
+          echo "output-binary=$output" >> $GITHUB_OUTPUT
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
-          files: target/release/yarusto
+          files: ${{ steps.prepare-release.outputs.output-binary }}
           token: ${{ secrets.GITHUB_TOKEN }}
           body: "**Full changelog**: https://github.com/${{ github.repository }}/commits/v${{ github.ref }}"
           draft: false
-          prerelease: false
+          prerelease: ${{ startsWith(github.ref, 'v0') || contains(github.ref, '-') }}

@@ -41,3 +41,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: target/debug
+          name: debug-artifacts-${{ matrix.platform }}
