@@ -24,6 +24,8 @@ jobs:
         uses: moonrepo/setup-rust@v1
         with:
           channel: stable
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.5
       - name: Enable sccache
@@ -46,7 +48,7 @@ jobs:
           ln target/release/yarusto $binary
           echo "binary=$binary" >> $GITHUB_OUTPUT
       - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.prepare-release.outputs.binary }}
           token: ${{ secrets.GITHUB_TOKEN }}
