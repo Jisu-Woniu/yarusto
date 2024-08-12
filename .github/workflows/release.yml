@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish-tauri:
+  publish:
     permissions:
       contents: write
     strategy:
@@ -16,7 +16,6 @@ jobs:
           - macos-latest
           - ubuntu-20.04
           - windows-latest
-
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repo
@@ -42,14 +41,14 @@ jobs:
       - name: Prepare Release Assets
         id: prepare-release
         shell: bash
-        run: >
-          output-binary=target/release/yarusto-$(rustc --version --verbose | grep host | cut -d ' ' -f 2)
-          ln target/release/yarusto $output-binary
-          echo "output-binary=$output" >> $GITHUB_OUTPUT
+        run: |
+          binary="target/release/yarusto-$(rustc --version --verbose | grep host | cut -d ' ' -f 2)"
+          ln target/release/yarusto $binary
+          echo "binary=$binary" >> $GITHUB_OUTPUT
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ steps.prepare-release.outputs.output-binary }}
+          files: ${{ steps.prepare-release.outputs.binary }}
           token: ${{ secrets.GITHUB_TOKEN }}
           body: "**Full changelog**: https://github.com/${{ github.repository }}/commits/v${{ github.ref }}"
           draft: false
