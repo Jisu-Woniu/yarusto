@@ -16,9 +16,9 @@ pub struct MemorySize {
 impl MemorySize {
     pub fn as_kib(&self) -> u32 {
         match self.unit {
-            MemorySizeUnit::KiB => self.value,
-            MemorySizeUnit::MiB => self.value << 10,
-            MemorySizeUnit::GiB => self.value << 20,
+            MemorySizeUnit::Kibibyte => self.value,
+            MemorySizeUnit::Mebibyte => self.value << 10,
+            MemorySizeUnit::Gibibyte => self.value << 20,
         }
     }
 }
@@ -27,24 +27,25 @@ impl Default for MemorySize {
     fn default() -> Self {
         Self {
             value: 128,
-            unit: MemorySizeUnit::MiB,
+            unit: MemorySizeUnit::Mebibyte,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum MemorySizeUnit {
-    KiB,
-    MiB,
-    GiB,
+    Kibibyte,
+    #[default]
+    Mebibyte,
+    Gibibyte,
 }
 
 impl FromStr for MemorySizeUnit {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "KiB" | "KB" | "kb" => Ok(Self::KiB),
-            "MiB" | "MB" | "mb" | "" => Ok(Self::MiB),
-            "GiB" | "GB" | "gb" => Ok(Self::GiB),
+            "KiB" | "KB" | "kb" => Ok(Self::Kibibyte),
+            "MiB" | "MB" | "mb" | "" => Ok(Self::Mebibyte),
+            "GiB" | "GB" | "gb" => Ok(Self::Gibibyte),
             _ => Err(InvalidUnit(s.to_string())),
         }
     }
@@ -66,6 +67,16 @@ impl<'de> Deserialize<'de> for MemorySize {
                 formatter.write_str("a string representing memory size")
             }
 
+            fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(MemorySize {
+                    value: v as _,
+                    unit: MemorySizeUnit::Mebibyte,
+                })
+            }
+
             fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
             where
                 E: de::Error,
@@ -78,7 +89,7 @@ impl<'de> Deserialize<'de> for MemorySize {
                 let value = value.parse().map_err(|_| {
                     de::Error::invalid_value(de::Unexpected::Str(value), &"a valid integer")
                 })?;
-                let unit = MemorySizeUnit::from_str(unit).unwrap_or(MemorySizeUnit::MiB);
+                let unit = MemorySizeUnit::from_str(unit).unwrap_or(MemorySizeUnit::Mebibyte);
 
                 Ok(MemorySize { value, unit })
             }
@@ -93,10 +104,6 @@ impl Serialize for MemorySize {
     where
         S: serde::Serializer,
     {
-        match self.unit {
-            MemorySizeUnit::KiB => serializer.serialize_u32(self.value),
-            MemorySizeUnit::MiB => serializer.serialize_u32(self.value * 1024),
-            MemorySizeUnit::GiB => serializer.serialize_u32(self.value * 1024 * 1024),
-        }
+        serializer.serialize_u32(self.as_kib())
     }
 }

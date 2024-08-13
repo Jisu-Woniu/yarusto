@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     ffi::OsStr,
+    io,
     path::{Path, PathBuf},
 };
 
@@ -22,16 +23,23 @@ pub struct Converter {
 
 impl Converter {
     pub async fn build(input_path: impl AsRef<Path>) -> anyhow::Result<Self> {
-        let zip_file = find_zip_file(input_path).await?;
+        async fn inner(input_path: &Path) -> anyhow::Result<Converter> {
+            let zip_file = find_zip_file(input_path).await?;
 
-        let temp_dir = TempDir::new()?;
+            if let Some(path) = zip_file {
+                let temp_dir = TempDir::new()?;
 
-        let config_paths = extract_config_file(&zip_file, &temp_dir).await?;
+                let config_paths = extract_config_file(path, &temp_dir).await?;
 
-        Ok(Self {
-            config_paths,
-            temp_dir,
-        })
+                Ok(Converter {
+                    config_paths,
+                    temp_dir,
+                })
+            } else {
+                Err(io::Error::from(io::ErrorKind::NotFound))?
+            }
+        }
+        inner(input_path.as_ref()).await
     }
 
     pub async fn rename(&self) -> crate::error::Result<&Self> {
@@ -87,56 +95,60 @@ impl Converter {
         Ok(self)
     }
 
-    pub async fn tar(&self, output_path: impl AsRef<Path>) -> anyhow::Result<&Self> {
-        let tar_file = output_path.as_ref().join("config.tar.zst");
-        fs::create_dir_all(&output_path).await?;
-        let file = File::create(&tar_file).await?;
-        let encoder = zstd::Encoder::new(file.into_std().await, 1)?.auto_finish();
-        let mut tar_builder = tar::Builder::new(encoder);
-        tar_builder.append_dir_all("config", &self.temp_dir)?;
-        tar_builder.finish()?;
+    pub async fn tar(&self, output_path: impl AsRef<Path>) -> anyhow::Result<()> {
+        async fn inner(temp_dir: &TempDir, output_path: &Path) -> anyhow::Result<()> {
+            let tar_file = output_path.join("config.tar.zst");
+            fs::create_dir_all(&output_path).await?;
+            let file = File::create(&tar_file).await?;
+            let encoder = zstd::Encoder::new(file.into_std().await, 1)?.auto_finish();
+            let mut tar_builder = tar::Builder::new(encoder);
+            tar_builder.append_dir_all("config", temp_dir)?;
+            tar_builder.finish()?;
 
-        Ok(self)
+            Ok(())
+        }
+        inner(&self.temp_dir, output_path.as_ref()).await
     }
 }
 
-async fn find_zip_file(input_path: impl AsRef<Path>) -> anyhow::Result<String> {
-    for mut entry in fs::read_dir(input_path).await.into_iter() {
-        let path = entry
-            .next_entry()
-            .await?
-            .expect("Should have an entry")
-            .path();
-        if let Some(extension) = path.extension() {
-            if extension == "zip" {
-                return Ok(path.to_string_lossy().into_owned());
+async fn find_zip_file(path: impl AsRef<Path>) -> io::Result<Option<PathBuf>> {
+    async fn inner(path: &Path) -> io::Result<Option<PathBuf>> {
+        while let Some(entry) = fs::read_dir(path).await?.next_entry().await? {
+            if let Some(ext) = entry.path().extension() {
+                if ext == "zip" {
+                    return Ok(Some(path.to_path_buf()));
+                }
             }
         }
+        Ok(None)
     }
 
-    anyhow::bail!("No .zip file found in the directory")
+    inner(path.as_ref()).await
 }
 
 async fn extract_config_file(
     zip_file: impl AsRef<Path>,
     temp_dir: impl AsRef<Path>,
 ) -> anyhow::Result<Vec<PathBuf>> {
-    let file = fs::File::open(zip_file).await?;
-    ZipArchive::new(file.into_std().await)?.extract(&temp_dir)?;
+    async fn inner(zip_file: &Path, temp_dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
+        let file = fs::File::open(zip_file).await?;
+        ZipArchive::new(file.into_std().await)?.extract(temp_dir)?;
 
-    let mut yaml_files = Vec::new();
+        let mut yaml_files = Vec::new();
 
-    let mut entries = WalkDir::new(&temp_dir);
-    while let Some(entry) = entries.try_next().await? {
-        let path = entry.path();
-        if path.file_name() == Some(OsStr::new("config.yaml"))
-            || path.file_name() == Some(OsStr::new("config.yml"))
-        {
-            yaml_files.push(path);
+        let mut entries = WalkDir::new(temp_dir);
+        while let Some(entry) = entries.try_next().await? {
+            let path = entry.path();
+            if path.file_name() == Some(OsStr::new("config.yaml"))
+                || path.file_name() == Some(OsStr::new("config.yml"))
+            {
+                yaml_files.push(path);
+            }
         }
+
+        eprintln!("Found {} YAML files", yaml_files.len());
+
+        Ok(yaml_files)
     }
-
-    eprintln!("Found {} YAML files", yaml_files.len());
-
-    Ok(yaml_files)
+    inner(zip_file.as_ref(), temp_dir.as_ref()).await
 }
