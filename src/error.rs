@@ -1,4 +1,6 @@
-use std::{convert::Infallible, io, result::Result as StdResult, str::Utf8Error};
+use std::{
+    convert::Infallible, io, num::TryFromIntError, result::Result as StdResult, str::Utf8Error,
+};
 
 use thiserror::Error;
 
@@ -18,7 +20,9 @@ pub enum Error {
     // InvalidTaskType(String),
     // #[error("Invalid resource limits: {0}")]
     // InvalidResourceLimits(String),
-    #[error("Invalid filename: {0}")]
+    #[error("invalid value")]
+    InvalidValue(#[from] TryFromIntError),
+    #[error("invalid filename")]
     InvalidFilename(#[from] Utf8Error),
     // #[error("Invalid score: {0}")]
     // InvalidScore(u32),

@@ -7,7 +7,7 @@ use crate::{
     model::{
         config::Config,
         types::{
-            duration::Duration,
+            duration::CustomDuration,
             judge::{Case, ResourceLimits, TaskType},
             memory_size::MemorySize,
         },
@@ -17,7 +17,7 @@ use crate::{
 #[derive(Debug, Deserialize)]
 pub struct RawConfig1 {
     #[serde(default)]
-    time: Duration,
+    time: CustomDuration,
     #[serde(default)]
     memory: MemorySize,
 }
@@ -25,7 +25,7 @@ pub struct RawConfig1 {
 impl Config for RawConfig1 {
     fn resource_limits(&self) -> Result<ResourceLimits> {
         Ok(ResourceLimits {
-            time: self.time.as_millis(),
+            time: u32::try_from(self.time.as_millis())?,
             memory: self.memory.as_kib(),
         })
     }

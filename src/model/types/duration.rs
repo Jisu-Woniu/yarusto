@@ -1,82 +1,132 @@
-use std::fmt;
+use std::{fmt, ops::Deref, str::FromStr, time::Duration};
 
 use serde::{
-    de::{self, Visitor},
-    Deserialize,
+    de::{Error, Unexpected, Visitor},
+    Deserialize, Serialize,
 };
 
-#[derive(Debug)]
-pub struct Duration {
-    value: u32,
-    unit: DurationUnit,
-}
+use crate::model::types::InvalidUnit;
 
-impl Default for Duration {
+#[derive(Debug, Serialize)]
+pub struct CustomDuration(pub(crate) Duration);
+
+impl Default for CustomDuration {
     fn default() -> Self {
-        Self {
-            value: 1000,
-            unit: DurationUnit::Milliseconds,
-        }
+        Self(Duration::from_secs(1))
     }
 }
 
-struct DurationVisitor;
+impl From<Duration> for CustomDuration {
+    fn from(value: Duration) -> Self {
+        Self(value)
+    }
+}
+
+impl From<CustomDuration> for Duration {
+    fn from(value: CustomDuration) -> Self {
+        value.0
+    }
+}
+
+impl Deref for CustomDuration {
+    type Target = Duration;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'de> Deserialize<'de> for CustomDuration {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_any(DurationVisitor)
+    }
+}
+
+pub struct DurationVisitor;
 
 impl<'de> Visitor<'de> for DurationVisitor {
-    type Value = Duration;
+    type Value = CustomDuration;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a string representing duration")
     }
 
+    fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
+        Ok(Duration::from_secs_f64(match v {
+            0.1..10.0 => Ok(v),
+            100.0..10000.0 => Ok(v / 1000.0),
+            _ => Err(Error::invalid_value(
+                Unexpected::Float(v),
+                &"a value represents duration, ranges from 0.1s to 10s, or 100ms to 10,000ms",
+            ))?,
+        }?)
+        .into())
+    }
+
     fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
     where
-        E: de::Error,
+        E: Error,
     {
         let (value, unit) = value.split_at(
             value
-                .find(|c: char| c.is_ascii_alphabetic())
+                .find(|c: char| !(c.is_ascii_digit() || c == '.'))
                 .unwrap_or(value.len()),
         );
-        let value = value.parse().map_err(|_| {
-            de::Error::invalid_value(de::Unexpected::Str(value), &"a valid integer")
-        })?;
-        let unit = DurationUnit::from_str(unit).unwrap_or(DurationUnit::Milliseconds);
+        let value: f64 = value.parse().map_err(|e| Error::custom(e))?;
 
-        Ok(Duration { value, unit })
+        let unit = DurationUnit::from_str(unit).map_err(|e| Error::custom(e))?;
+
+        Ok(Duration::try_from_secs_f64(match unit {
+            DurationUnit::Seconds => value,
+            DurationUnit::Milliseconds => value / 1000.0,
+        })
+        .map_err(|e| Error::custom(e))?
+        .into())
     }
 }
 
-impl<'de> Deserialize<'de> for Duration {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(DurationVisitor)
-    }
-}
-
-impl Duration {
-    pub fn as_millis(&self) -> u32 {
-        match self.unit {
-            DurationUnit::Milliseconds => self.value,
-            DurationUnit::Seconds => self.value * 1000,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum DurationUnit {
+enum DurationUnit {
     Milliseconds,
     Seconds,
 }
 
-impl DurationUnit {
-    pub fn from_str(s: &str) -> Option<Self> {
+impl FromStr for DurationUnit {
+    type Err = InvalidUnit;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "ms" => Some(Self::Milliseconds),
-            "s" => Some(Self::Seconds),
-            _ => None,
+            "ms" | "" => Ok(Self::Milliseconds),
+            "s" => Ok(Self::Seconds),
+            _ => Err(InvalidUnit(s.to_string())),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::CustomDuration;
+
+    #[test]
+    fn deserialize_invalid_data() {
+        use serde_json::json;
+
+        let json_value = json!("10#$ms&");
+
+        dbg!(serde_json::from_value::<CustomDuration>(json_value))
+            .expect_err("not a valid duration expression");
+
+        let json_value = json!("10ms&");
+        dbg!(serde_json::from_value::<CustomDuration>(json_value))
+            .expect_err("not a valid duration expression");
+
+        let json_value = json!("10ms");
+        dbg!(serde_json::from_value::<CustomDuration>(json_value))
+            .expect("is a valid duration expression");
     }
 }

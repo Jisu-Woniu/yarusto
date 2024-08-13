@@ -1,9 +1,11 @@
-use std::fmt;
+use std::{fmt, result::Result, str::FromStr};
 
 use serde::{
     de::{self, Visitor},
     Deserialize, Serialize,
 };
+
+use super::InvalidUnit;
 
 #[derive(Debug)]
 pub struct MemorySize {
@@ -15,8 +17,8 @@ impl MemorySize {
     pub fn as_kib(&self) -> u32 {
         match self.unit {
             MemorySizeUnit::KiB => self.value,
-            MemorySizeUnit::MiB => self.value * 1024,
-            MemorySizeUnit::GiB => self.value * 1024 * 1024,
+            MemorySizeUnit::MiB => self.value << 10,
+            MemorySizeUnit::GiB => self.value << 20,
         }
     }
 }
@@ -37,15 +39,17 @@ pub enum MemorySizeUnit {
     GiB,
 }
 
-impl MemorySizeUnit {
-    pub fn from_str(s: &str) -> Option<Self> {
+impl FromStr for MemorySizeUnit {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "KiB" | "KB" | "kb" => Some(Self::KiB),
-            "MiB" | "MB" | "mb" => Some(Self::MiB),
-            "GiB" | "GB" | "gb" => Some(Self::GiB),
-            _ => None,
+            "KiB" | "KB" | "kb" => Ok(Self::KiB),
+            "MiB" | "MB" | "mb" | "" => Ok(Self::MiB),
+            "GiB" | "GB" | "gb" => Ok(Self::GiB),
+            _ => Err(InvalidUnit(s.to_string())),
         }
     }
+
+    type Err = InvalidUnit;
 }
 
 impl<'de> Deserialize<'de> for MemorySize {
