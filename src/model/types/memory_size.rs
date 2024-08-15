@@ -1,7 +1,7 @@
 use std::{fmt, result::Result, str::FromStr};
 
 use serde::{
-    de::{self, Visitor},
+    de::{self, Error, Unexpected, Visitor},
     Deserialize, Serialize,
 };
 
@@ -71,8 +71,18 @@ impl<'de> Deserialize<'de> for MemorySize {
             where
                 E: de::Error,
             {
+                let value = match v {
+                    // SAFETY: v is neither `NaN` nor `Inf`, and is in the valid range of i32
+                    1.0..=10240.0 => unsafe { v.to_int_unchecked() },
+                    _ => {
+                        return Err(Error::invalid_value(
+                            Unexpected::Float(v),
+                            &"a value between 1MiB and 10GiB (10,240MiB)",
+                        ));
+                    }
+                };
                 Ok(MemorySize {
-                    value: v as _,
+                    value,
                     unit: MemorySizeUnit::Mebibyte,
                 })
             }
@@ -95,7 +105,7 @@ impl<'de> Deserialize<'de> for MemorySize {
             }
         }
 
-        deserializer.deserialize_str(MemorySizeVisitor)
+        deserializer.deserialize_any(MemorySizeVisitor)
     }
 }
 
