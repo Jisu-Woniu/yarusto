@@ -1,4 +1,4 @@
-use std::num::NonZeroU32;
+use std::num::NonZero;
 
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +10,7 @@ use super::{
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CasesConfig {
-    pub score: NonZeroU32,
+    pub score: NonZero<u32>,
     pub judge: JudgeType,
     pub resource_limits: ResourceLimits,
     pub task: TaskType,
@@ -31,16 +31,15 @@ impl<'a> TryFrom<Box<dyn Config + 'a>> for CasesConfig {
 
 #[cfg(test)]
 mod tests {
-    use std::num::NonZeroU32;
 
     use serde_json::json;
 
     use super::*;
     use crate::model::types::judge::Case;
 
-    fn non_zero(value: u32) -> NonZeroU32 {
-        debug_assert_ne!(value, 0);
-        NonZeroU32::new(value).unwrap()
+    const fn non_zero(value: u32) -> NonZero<u32> {
+        // SAFETY: for local use with non-zero values only
+        unsafe { NonZero::new_unchecked(value) }
     }
 
     #[test]
@@ -62,7 +61,7 @@ mod tests {
                     Case {
                         input: "2.in".into(),
                         answer: "2.ans".into(),
-                        score: NonZeroU32::new(60),
+                        score: NonZero::new(60),
                     },
                 ],
             },
@@ -73,72 +72,72 @@ mod tests {
     #[test]
     fn deserialize_test() {
         serde_json::from_value::<CasesConfig>(json!({
-          "score": 100,
-          "judge": {
-            "judgeType": "classic"
-          },
-          "resourceLimits": {
-            "time": 1000,
-            "memory": 256
-          },
-          "task": {
-            "taskType": "simple",
-            "cases": [
-              {
-                "input": "1.in",
-                "answer": "1.ans"
-              },
-              {
-                "input": "2.in",
-                "answer": "2.ans",
-                "score": 60
-              }
-            ]
-          }
+            "score": 100,
+            "judge": {
+                "judgeType": "classic"
+            },
+            "resourceLimits": {
+                "time": 1000,
+                "memory": 256
+            },
+            "task": {
+                "taskType": "simple",
+                "cases": [
+                {
+                    "input": "1.in",
+                    "answer": "1.ans"
+                },
+                {
+                    "input": "2.in",
+                    "answer": "2.ans",
+                    "score": 60
+                }
+                ]
+            }
         }))
         .unwrap();
 
         serde_json::from_value::<CasesConfig>(json!({
-          "score": 100,
-          "judge": {
-            "judgeType": "special-judge",
-            "checker": "checker.cpp"
-          },
-          "resourceLimits": {
-            "time": 1000,
-            "memory": 256
-          },
-          "task": {
-            "taskType": "subtask",
-            "subtasks": [
-              {
-                "cases": [
-                  {
-                    "input": "1.in",
-                    "answer": "1.ans"
-                  },
-                  {
-                    "input": "2.in",
-                    "answer": "2.ans"
-                  }
-                ],
-                "score": 40
-              },
-              {
-                "cases": [
-                  {
-                    "input": "3.in",
-                    "answer": "3.ans"
-                  },
-                  {
-                    "input": "4.in",
-                    "answer": "4.ans"
-                  }
-                ],
-                "score": 60
-              }
-            ]
-          }
+            "score": 100,
+            "judge": {
+                "judgeType": "special-judge",
+                "checker": "checker.cpp"
+            },
+            "resourceLimits": {
+                "time": 1000,
+                "memory": 256
+            },
+            "task": {
+                "taskType": "subtask",
+                "subtasks": [
+                {
+                    "cases": [
+                    {
+                        "input": "1.in",
+                        "answer": "1.ans"
+                    },
+                    {
+                        "input": "2.in",
+                        "answer": "2.ans"
+                    }
+                    ],
+                    "score": 40
+                },
+                {
+                    "cases": [
+                    {
+                        "input": "3.in",
+                        "answer": "3.ans"
+                    },
+                    {
+                        "input": "4.in",
+                        "answer": "4.ans"
+                    }
+                    ],
+                    "score": 60
+                }
+                ]
+            }
         }))
         .unwrap();
     }
