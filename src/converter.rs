@@ -22,7 +22,7 @@ pub struct Converter {
 }
 
 impl Converter {
-    pub async fn build(input_path: impl AsRef<Path>) -> anyhow::Result<Self> {
+    pub async fn with_input_path(input_path: impl AsRef<Path>) -> anyhow::Result<Self> {
         async fn inner(input_path: &Path) -> anyhow::Result<Converter> {
             let zip_file = find_zip_file(input_path).await?;
 

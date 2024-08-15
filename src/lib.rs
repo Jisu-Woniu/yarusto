@@ -8,12 +8,12 @@ use cli::Cli;
 use converter::Converter;
 
 pub async fn main_impl() -> anyhow::Result<()> {
-    let cli = Cli::parse();
+    let Cli {
+        input_path,
+        output_path,
+    } = Cli::parse();
 
-    let input_path = cli.input_path;
-    let output_path = cli.output_path;
-
-    let converter = Converter::build(&input_path).await?;
+    let converter = Converter::with_input_path(&input_path).await?;
 
     converter
         .rename()

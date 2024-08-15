@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -5,8 +7,8 @@ use clap::Parser;
 pub struct Cli {
     /// The input file(.zip) path
     #[arg(short, long, default_value = ".")]
-    pub input_path: String,
+    pub input_path: PathBuf,
     /// The output file(.tar) path
     #[arg(short, long, default_value = "./out")]
-    pub output_path: String,
+    pub output_path: PathBuf,
 }
