@@ -7,7 +7,7 @@ use serde::{
 
 use crate::model::types::InvalidUnit;
 
-#[derive(Debug, Serialize, Clone, Copy)]
+#[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CustomDuration(pub(crate) Duration);
 
 impl Default for CustomDuration {

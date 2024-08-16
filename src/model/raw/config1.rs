@@ -9,7 +9,7 @@ use crate::{
         types::{
             duration::CustomDuration,
             judge::{Case, ResourceLimits, TaskType},
-            memory_size::MemorySize,
+            memory_size::CustomSize,
         },
     },
 };
@@ -19,7 +19,7 @@ pub struct ConfigData {
     #[serde(default)]
     time: CustomDuration,
     #[serde(default)]
-    memory: MemorySize,
+    memory: CustomSize,
 }
 
 impl Config for ConfigData {
