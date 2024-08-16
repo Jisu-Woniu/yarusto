@@ -7,14 +7,14 @@ use serde::{
 
 use super::InvalidUnit;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct MemorySize {
     value: u32,
     unit: MemorySizeUnit,
 }
 
 impl MemorySize {
-    pub fn as_kib(&self) -> u32 {
+    pub fn as_kibibyte(&self) -> u32 {
         match self.unit {
             // TODO: Use different types for parsed value and internal representation.
             MemorySizeUnit::Unspecified | MemorySizeUnit::Kibibyte => self.value,
@@ -33,7 +33,7 @@ impl Default for MemorySize {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum MemorySizeUnit {
     Unspecified,
     Kibibyte,
@@ -155,6 +155,6 @@ impl Serialize for MemorySize {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_u32(self.as_kib())
+        serializer.serialize_u32(self.as_kibibyte())
     }
 }

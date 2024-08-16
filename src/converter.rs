@@ -14,7 +14,9 @@ use tokio::{
 use tokio_stream::StreamExt;
 use zip::ZipArchive;
 
-use crate::model::{cases_config::CasesConfig, config::Config, raw::config1::RawConfig1};
+use crate::model::{
+    cases_config::CasesConfig, config::Config, raw::config1::ConfigData as Config1,
+};
 
 pub struct Converter {
     config_paths: Vec<PathBuf>,
@@ -80,7 +82,9 @@ impl Converter {
     pub async fn convert(&self) -> anyhow::Result<&Self> {
         for config_path in self.config_paths.iter() {
             let reader = File::open(&config_path).await?;
-            let raw: RawConfig1 = serde_yml::from_reader(reader.into_std().await)?;
+
+            // TODO: Erase the concrete type here.
+            let raw: Config1 = serde_yml::from_reader(reader.into_std().await)?;
             let config: Box<dyn Config> = Box::new(raw);
             let target = CasesConfig::try_from(config)?;
             let parent_dir = config_path.parent().expect("No parent directory");

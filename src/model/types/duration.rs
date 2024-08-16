@@ -7,7 +7,7 @@ use serde::{
 
 use crate::model::types::InvalidUnit;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone, Copy)]
 pub struct CustomDuration(pub(crate) Duration);
 
 impl Default for CustomDuration {
@@ -51,7 +51,9 @@ impl<'de> Visitor<'de> for DurationVisitor {
     type Value = CustomDuration;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a string representing duration")
+        formatter.write_str(
+            "a value representing duration, ranges from 0.1s to 10s, i.e. 100ms to 10,000ms",
+        )
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
@@ -59,12 +61,9 @@ impl<'de> Visitor<'de> for DurationVisitor {
         E: Error,
     {
         Ok(Duration::from_millis(match v {
-            1..10 => Ok(v * 1000),
-            100..10000 => Ok(v),
-            _ => Err(Error::invalid_value(
-                Unexpected::Unsigned(v),
-                &"a value represents duration, ranges from 0.1s to 10s, i.e. 100ms to 10,000ms",
-            ))?,
+            1..=10 => Ok(v * 1000),
+            100..=10000 => Ok(v),
+            _ => Err(Error::invalid_value(Unexpected::Unsigned(v), &self))?,
         }?)
         .into())
     }
@@ -76,10 +75,7 @@ impl<'de> Visitor<'de> for DurationVisitor {
         Ok(Duration::from_secs_f64(match v {
             0.1..10.0 => Ok(v),
             100.0..10000.0 => Ok(v / 1000.0),
-            _ => Err(Error::invalid_value(
-                Unexpected::Float(v),
-                &"a value represents duration, ranges from 0.1s to 10s, or 100ms to 10,000ms",
-            ))?,
+            _ => Err(Error::invalid_value(Unexpected::Float(v), &self))?,
         }?)
         .into())
     }

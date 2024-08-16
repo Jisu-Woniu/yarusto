@@ -15,18 +15,18 @@ use crate::{
 };
 
 #[derive(Debug, Deserialize)]
-pub struct RawConfig1 {
+pub struct ConfigData {
     #[serde(default)]
     time: CustomDuration,
     #[serde(default)]
     memory: MemorySize,
 }
 
-impl Config for RawConfig1 {
+impl Config for ConfigData {
     fn resource_limits(&self) -> Result<ResourceLimits> {
         Ok(ResourceLimits {
             time: u32::try_from(self.time.as_millis())?,
-            memory: self.memory.as_kib(),
+            memory: self.memory.as_kibibyte(),
         })
     }
 
