@@ -11,5 +11,8 @@
   },
   "[yaml]": {
     "editor.defaultFormatter": "dprint.dprint"
+  },
+  "[toml]": {
+    "editor.defaultFormatter": "dprint.dprint"
   }
 }

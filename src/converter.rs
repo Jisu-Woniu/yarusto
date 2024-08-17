@@ -2,7 +2,9 @@ use std::{
     borrow::Cow,
     ffi::OsStr,
     io,
+    os::unix::ffi::OsStrExt,
     path::{Path, PathBuf},
+    str,
 };
 
 use async_walkdir::WalkDir;
@@ -55,25 +57,23 @@ impl Converter {
         let mut entries = WalkDir::new(&self.temp_dir);
         while let Some(entry) = entries.try_next().await? {
             let path = entry.path();
-            let filename = path
-                .file_name()
-                .expect("full path should have filename")
-                .to_str()
-                .expect("filename contains invalid UTF-8");
 
-            if let Some((basename, ext @ ("in" | "out" | "ans"))) = filename.rsplit_once(".") {
-                let digits = {
-                    let pos = basename
-                        .as_bytes()
-                        .iter()
-                        .rposition(|b| !b.is_ascii_digit())
-                        .map_or(0, |p| p + 1);
-                    &basename[pos..]
-                };
+            if let (Some(stem), Some(ext)) = (path.file_stem(), path.extension()) {
+                if let (stem, ext @ (b"in" | b"out" | b"ans")) = (stem.as_bytes(), ext.as_bytes()) {
+                    let digits = if let Some(pos) = stem.iter().rposition(|b| !b.is_ascii_digit()) {
+                        &stem[pos..]
+                    } else {
+                        stem
+                    };
 
-                let new_path = path.with_file_name(format!("{}.{}", digits, map_ext(ext)));
+                    // SAFETY: `digits` is composed of ASCII digits only
+                    let new_stem = unsafe { str::from_utf8_unchecked(digits) };
 
-                fs::rename(path, new_path).await?;
+                    // SAFETY: `ext` is one of `"in"` / `"out"` / `"ans"`, which are all ASCII-only
+                    let new_ext = map_ext(unsafe { str::from_utf8_unchecked(ext) });
+                    let new_path = path.with_file_name(format!("{new_stem}.{new_ext}"));
+                    fs::rename(&path, new_path).await?;
+                }
             }
         }
         Ok(self)
@@ -131,11 +131,11 @@ async fn find_zip_file(path: impl AsRef<Path>) -> io::Result<Option<PathBuf>> {
 }
 
 async fn extract_config_file(
-    zip_file: impl AsRef<Path>,
+    zip_path: impl AsRef<Path>,
     temp_dir: impl AsRef<Path>,
 ) -> anyhow::Result<Vec<PathBuf>> {
-    async fn inner(zip_file: &Path, temp_dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
-        let file = fs::File::open(zip_file).await?;
+    async fn inner(zip_path: &Path, temp_dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
+        let file = fs::File::open(zip_path).await?;
         ZipArchive::new(file.into_std().await)?.extract(temp_dir)?;
 
         let mut yaml_files = Vec::new();
@@ -154,5 +154,5 @@ async fn extract_config_file(
 
         Ok(yaml_files)
     }
-    inner(zip_file.as_ref(), temp_dir.as_ref()).await
+    inner(zip_path.as_ref(), temp_dir.as_ref()).await
 }
