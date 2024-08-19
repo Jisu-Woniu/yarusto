@@ -2,7 +2,6 @@ use std::{
     borrow::Cow,
     ffi::OsStr,
     io,
-    os::unix::ffi::OsStrExt,
     path::{Path, PathBuf},
     str,
 };
@@ -59,7 +58,9 @@ impl Converter {
             let path = entry.path();
 
             if let (Some(stem), Some(ext)) = (path.file_stem(), path.extension()) {
-                if let (stem, ext @ (b"in" | b"out" | b"ans")) = (stem.as_bytes(), ext.as_bytes()) {
+                if let (stem, ext @ (b"in" | b"out" | b"ans")) =
+                    (stem.as_encoded_bytes(), ext.as_encoded_bytes())
+                {
                     let digits = if let Some(pos) = stem.iter().rposition(|b| !b.is_ascii_digit()) {
                         &stem[pos..]
                     } else {
@@ -155,4 +156,10 @@ async fn extract_config_file(
         Ok(yaml_files)
     }
     inner(zip_path.as_ref(), temp_dir.as_ref()).await
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test() {}
 }
