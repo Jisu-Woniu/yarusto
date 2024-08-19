@@ -62,7 +62,7 @@ impl Converter {
                     (stem.as_encoded_bytes(), ext.as_encoded_bytes())
                 {
                     let digits = if let Some(pos) = stem.iter().rposition(|b| !b.is_ascii_digit()) {
-                        &stem[pos..]
+                        &stem[pos + 1..]
                     } else {
                         stem
                     };
@@ -161,5 +161,29 @@ async fn extract_config_file(
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test() {}
+    fn test() {
+        let os = {
+            #[cfg(unix)]
+            {
+                use std::{ffi::OsStr, os::unix::ffi::OsStrExt as _};
+                static SOURCE: &[u8] = &[0x66, 0x6f, 0x80, 0x6f, b'1', b'2'];
+                let os_str = OsStr::from_bytes(SOURCE);
+                os_str
+            }
+            #[cfg(windows)]
+            {
+                use std::{ffi::OsString, os::windows::ffi::OsStringExt as _};
+
+                static SOURCE: &[u16] = &[0x0066, 0xD800, b'1' as _, b'2' as _];
+                let os_string = OsString::from_wide(SOURCE);
+                os_string
+            }
+        };
+        let bytes = os.as_encoded_bytes();
+        let pos = bytes.iter().rposition(|b| !b.is_ascii_digit());
+        assert_eq!(pos, Some(3));
+        let digits = &bytes[pos.unwrap() + 1..];
+
+        assert_eq!(digits, b"12");
+    }
 }
