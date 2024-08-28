@@ -5,10 +5,10 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
-    /// The input file (.zip) path
+    /// Input directory for ZIP archives
     #[arg(default_value = ".")]
-    pub input_path: PathBuf,
-    /// The output file (.tar) path
+    pub input: PathBuf,
+    /// Output directory for tarballs (.tar.zst)
     #[arg(short, long, default_value = "./out")]
-    pub output_path: PathBuf,
+    pub output: PathBuf,
 }

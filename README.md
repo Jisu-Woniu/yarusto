@@ -4,12 +4,14 @@ A converter that converts .yaml files in test samples into .toml files, serving 
 
 ## Usage
 
-```shell
-Usage: yarusto [OPTIONS]
+```plaintext
+Usage: yarusto [OPTIONS] [INPUT]
+
+Arguments:
+  [INPUT]  Input directory for ZIP archives [default: .]
 
 Options:
-  -i, --input-path <INPUT_PATH>    The input file(.zip) path [default: .]
-  -o, --output-path <OUTPUT_PATH>  The output file(.tar) path [default: ./out]
-  -h, --help                       Print help
-  -V, --version                    Print version
+  -o, --output <OUTPUT>  Output directory for tarballs (.tar.zst) [default: ./out]
+  -h, --help             Print help
+  -V, --version          Print version
 ```

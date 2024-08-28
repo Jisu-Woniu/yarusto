@@ -9,8 +9,8 @@ use converter::Converter;
 
 pub async fn main_impl() -> anyhow::Result<()> {
     let Cli {
-        input_path,
-        output_path,
+        input: input_path,
+        output: output_path,
     } = Cli::parse();
 
     let converter = Converter::with_input_path(&input_path).await?;
