@@ -17,7 +17,7 @@ serde = { version = "1.0.214", features = ["derive"] }
 serde_json = "1.0.132"
 serde_yml = "0.0.11"
 size = "0.4.1"
-tar = "0.4.42"
+tar = "0.4.43"
 tempfile = "3.13.0"
 thiserror = "1.0.67"
 tokio = { version = "1.41.0", features = ["fs", "io-util", "macros", "rt", "rt-multi-thread"] }
