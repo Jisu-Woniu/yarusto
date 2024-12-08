@@ -8,7 +8,7 @@ repository = "https://github.com/NJUPT-SAST/yarusto"
 rust-version = "1.78"
 
 [dependencies]
-anyhow = { version = "1.0.93", features = ["backtrace"] }
+anyhow = { version = "1.0.94", features = ["backtrace"] }
 async-walkdir = "2.0.0"
 async_zip = { version = "0.0.17", features = ["tokio", "tokio-fs"] }
 byte-unit = "5.1.6"
