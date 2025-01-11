@@ -20,7 +20,7 @@ size = "0.4.1"
 tar = "0.4.43"
 tempfile = "3.14.0"
 thiserror = "2.0.10"
-tokio = { version = "1.42.0", features = ["fs", "io-util", "macros", "rt", "rt-multi-thread"] }
+tokio = { version = "1.43.0", features = ["fs", "io-util", "macros", "rt", "rt-multi-thread"] }
 tokio-stream = "0.1.17"
 toml = "0.8.19"
 zip = "2.2.2"
