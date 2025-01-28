@@ -9,7 +9,7 @@ rust-version = "1.78"
 
 [dependencies]
 anyhow = { version = "1.0.95", features = ["backtrace"] }
-async-walkdir = "2.0.0"
+async-walkdir = "2.1.0"
 async_zip = { version = "0.0.17", features = ["tokio", "tokio-fs"] }
 byte-unit = "5.1.6"
 clap = { version = "4.5.27", features = ["derive"] }
