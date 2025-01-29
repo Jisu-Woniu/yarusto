@@ -85,7 +85,7 @@ impl Converter {
             let reader = File::open(&config_path).await?;
 
             // TODO: Erase the concrete type here.
-            let raw: Config1 = serde_yml::from_reader(reader.into_std().await)?;
+            let raw: Config1 = serde_yaml_ng::from_reader(reader.into_std().await)?;
             let config: Box<dyn Config> = Box::new(raw);
             let target = CasesConfig::try_from(config)?;
             let parent_dir = config_path.parent().expect("No parent directory");
