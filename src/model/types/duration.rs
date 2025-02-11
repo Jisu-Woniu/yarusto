@@ -47,7 +47,7 @@ impl<'de> Deserialize<'de> for CustomDuration {
 
 pub struct DurationVisitor;
 
-impl<'de> Visitor<'de> for DurationVisitor {
+impl Visitor<'_> for DurationVisitor {
     type Value = CustomDuration;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

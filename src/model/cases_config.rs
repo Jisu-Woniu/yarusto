@@ -37,15 +37,18 @@ mod tests {
     use super::*;
     use crate::model::types::judge::Case;
 
-    const fn non_zero(value: u32) -> NonZero<u32> {
-        // SAFETY: for local use with non-zero values only
-        unsafe { NonZero::new_unchecked(value) }
+    macro_rules! non_zero {
+        ($value:expr) => {{
+            ::static_assertions::const_assert_ne!($value, 0);
+            // SAFETY: for local use with non-zero values only
+            unsafe { ::std::num::NonZero::new_unchecked($value) }
+        }};
     }
 
     #[test]
     fn serialize_test() {
         serde_json::to_string_pretty(&CasesConfig {
-            score: non_zero(100),
+            score: non_zero!(100),
             judge: JudgeType::Classic,
             resource_limits: ResourceLimits {
                 time: 1000,

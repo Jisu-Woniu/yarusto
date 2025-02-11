@@ -83,7 +83,7 @@ impl<'de> Deserialize<'de> for CustomSize {
     {
         struct CustomSizeVisitor;
 
-        impl<'de> Visitor<'de> for CustomSizeVisitor {
+        impl Visitor<'_> for CustomSizeVisitor {
             type Value = CustomSize;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
