@@ -6,7 +6,7 @@ use serde::{
 };
 use size::{consts::KIBIBYTE, Size};
 
-use super::InvalidUnit;
+use crate::model::types::InvalidUnit;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CustomSize(pub(crate) Size);

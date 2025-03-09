@@ -2,7 +2,7 @@ use std::num::NonZero;
 
 use serde::{Deserialize, Serialize};
 
-use super::{
+use crate::model::{
     config::Config,
     types::judge::{JudgeType, ResourceLimits, TaskType},
 };
@@ -37,18 +37,29 @@ mod tests {
     use super::*;
     use crate::model::types::judge::Case;
 
-    macro_rules! non_zero {
+    macro_rules! const_non_zero {
         ($value:expr) => {{
-            ::static_assertions::const_assert_ne!($value, 0);
+            // `const` block ensures `$value` evaluation has no side effect.
+            //
+            // Code like this won't compile:
+            //
+            // ```rust
+            // {
+            //     let x = 0;
+            //     const { x += 1 };
+            //          // ^ error[E0435]: attempt to use a non-constant value in a constant
+            // }
+            // ```
+            ::static_assertions::const_assert_ne!((const { $value }), 0);
             // SAFETY: for local use with non-zero values only
-            unsafe { ::std::num::NonZero::new_unchecked($value) }
+            unsafe { ::std::num::NonZero::new_unchecked(const { $value }) }
         }};
     }
 
     #[test]
     fn serialize_test() {
         serde_json::to_string_pretty(&CasesConfig {
-            score: non_zero!(100),
+            score: const_non_zero!(100),
             judge: JudgeType::Classic,
             resource_limits: ResourceLimits {
                 time: 1000,
@@ -86,15 +97,15 @@ mod tests {
             "task": {
                 "taskType": "simple",
                 "cases": [
-                {
-                    "input": "1.in",
-                    "answer": "1.ans"
-                },
-                {
-                    "input": "2.in",
-                    "answer": "2.ans",
-                    "score": 60
-                }
+                    {
+                        "input": "1.in",
+                        "answer": "1.ans"
+                    },
+                    {
+                        "input": "2.in",
+                        "answer": "2.ans",
+                        "score": 60
+                    }
                 ]
             }
         }))
@@ -113,32 +124,32 @@ mod tests {
             "task": {
                 "taskType": "subtask",
                 "subtasks": [
-                {
-                    "cases": [
                     {
-                        "input": "1.in",
-                        "answer": "1.ans"
+                        "cases": [
+                            {
+                                "input": "1.in",
+                                "answer": "1.ans"
+                            },
+                            {
+                                "input": "2.in",
+                                "answer": "2.ans"
+                            }
+                        ],
+                        "score": 40
                     },
                     {
-                        "input": "2.in",
-                        "answer": "2.ans"
+                        "cases": [
+                            {
+                                "input": "3.in",
+                                "answer": "3.ans"
+                            },
+                            {
+                                "input": "4.in",
+                                "answer": "4.ans"
+                            }
+                        ],
+                        "score": 60
                     }
-                    ],
-                    "score": 40
-                },
-                {
-                    "cases": [
-                    {
-                        "input": "3.in",
-                        "answer": "3.ans"
-                    },
-                    {
-                        "input": "4.in",
-                        "answer": "4.ans"
-                    }
-                    ],
-                    "score": 60
-                }
                 ]
             }
         }))

@@ -1,9 +1,8 @@
 use std::num::NonZeroU32;
 
-use super::types::judge::ResourceLimits;
 use crate::{
     error::Result,
-    model::types::judge::{JudgeType, TaskType},
+    model::types::judge::{JudgeType, ResourceLimits, TaskType},
 };
 
 pub trait Config {
