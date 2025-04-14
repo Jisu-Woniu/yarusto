@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/NJUPT-SAST/yarusto"
 
 [dependencies]
-anyhow = { version = "1.0.97", features = ["backtrace"] }
+anyhow = { version = "1.0.98", features = ["backtrace"] }
 async-walkdir = "2.1.0"
 async_zip = { version = "0.0.17", features = ["tokio", "tokio-fs"] }
 clap = { version = "4.5.35", features = ["derive"] }
