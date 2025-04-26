@@ -1,10 +1,10 @@
 use std::{fmt, ops::Deref, result::Result, str::FromStr};
 
 use serde::{
-    de::{self, Error, Unexpected, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
+    de::{self, Error, Unexpected, Visitor},
 };
-use size::{consts::KIBIBYTE, Size};
+use size::{Size, consts::KIBIBYTE};
 
 use crate::model::types::InvalidUnit;
 

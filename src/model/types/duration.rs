@@ -1,8 +1,8 @@
 use std::{fmt, ops::Deref, str::FromStr, time::Duration};
 
 use serde::{
-    de::{Error, Unexpected, Visitor},
     Deserialize, Serialize,
+    de::{Error, Unexpected, Visitor},
 };
 
 use crate::model::types::InvalidUnit;
