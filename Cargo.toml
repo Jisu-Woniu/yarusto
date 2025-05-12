@@ -10,7 +10,7 @@ repository = "https://github.com/NJUPT-SAST/yarusto"
 anyhow = { version = "1.0.98", features = ["backtrace"] }
 async-walkdir = "2.1.0"
 async_zip = { version = "0.0.17", features = ["tokio", "tokio-fs"] }
-clap = { version = "4.5.37", features = ["derive"] }
+clap = { version = "4.5.38", features = ["derive"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 serde_yaml_ng = "0.10.0"
