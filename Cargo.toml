@@ -21,7 +21,7 @@ thiserror = "2.0.12"
 tokio = { version = "1.45.1", features = ["fs", "io-util", "macros", "rt", "rt-multi-thread"] }
 tokio-stream = "0.1.17"
 toml = "0.8.23"
-zip = "4.0.0"
+zip = "4.1.0"
 zstd = "0.13.3"
 
 # futures-lite = "2.3.0"
