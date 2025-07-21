@@ -12,7 +12,7 @@ async-walkdir = "2.1.0"
 async_zip = { version = "0.0.17", features = ["tokio", "tokio-fs"] }
 clap = { version = "4.5.41", features = ["derive"] }
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.141"
 serde_yaml_ng = "0.10.0"
 size = "0.5.0"
 tar = "0.4.44"
