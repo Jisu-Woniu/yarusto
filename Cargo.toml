@@ -20,7 +20,7 @@ tempfile = "3.25.0"
 thiserror = "2.0.18"
 tokio = { version = "1.49.0", features = ["fs", "io-util", "macros", "rt", "rt-multi-thread"] }
 tokio-stream = "0.1.18"
-toml = "1.0.1"
+toml = "1.0.2"
 zip = "8.1.0"
 zstd = "0.13.3"
 
